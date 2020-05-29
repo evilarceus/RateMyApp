@@ -75,7 +75,7 @@ class RateMyAppDialog extends StatelessWidget {
     Widget content = SingleChildScrollView(
       child: Padding(
         padding: dialogStyle.messagePadding,
-        child: Text(
+        child: SelectableText(
           message,
           style: dialogStyle.messageStyle,
           textAlign: dialogStyle.messageAlign,
