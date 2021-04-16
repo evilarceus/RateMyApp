@@ -26,13 +26,7 @@ class _ContentWidgetState extends State<ContentWidget> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      refresh();
-      
-      if(mounted && widget.rateMyApp.shouldOpenDialog) {
-        widget.rateMyApp.showRateDialog(context);
-      }
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => refresh());
   }
 
   @override
@@ -44,30 +38,36 @@ class _ContentWidgetState extends State<ContentWidget> {
           children: [
             for (DebuggableCondition condition in debuggableConditions) //
               textCenter(condition.valuesAsString),
-            textCenter('Are conditions met ? ' + (shouldOpenDialog ? 'Yes' : 'No')),
+            textCenter(
+                'Are conditions met ? ' + (shouldOpenDialog ? 'Yes' : 'No')),
             Padding(
               padding: const EdgeInsets.only(top: 10),
-              child: RaisedButton(
-                child: const Text('Launch "Rate my app" dialog'),
+              child: ElevatedButton(
                 onPressed: () async {
-                  await widget.rateMyApp.showRateDialog(context); // We launch the default Rate my app dialog.
+                  await widget.rateMyApp.showRateDialog(
+                      context); // We launch the default Rate my app dialog.
                   refresh();
                 },
+                child: const Text('Launch "Rate my app" dialog'),
               ),
             ),
-            RaisedButton(
+            ElevatedButton(
+              onPressed: () async {
+                await widget.rateMyApp.showStarRateDialog(context,
+                    actionsBuilder: (_, stars) => starRateDialogActionsBuilder(
+                        context,
+                        stars)); // We launch the Rate my app dialog with stars.
+                refresh();
+              },
               child: const Text('Launch "Rate my app" star dialog'),
-              onPressed: () async {
-                await widget.rateMyApp.showStarRateDialog(context, actionsBuilder: (_, stars) => starRateDialogActionsBuilder(context, stars)); // We launch the Rate my app dialog with stars.
-                refresh();
-              },
             ),
-            RaisedButton(
-              child: const Text('Reset'),
+            ElevatedButton(
               onPressed: () async {
-                await widget.rateMyApp.reset(); // We reset all Rate my app conditions values.
+                await widget.rateMyApp
+                    .reset(); // We reset all Rate my app conditions values.
                 refresh();
               },
+              child: const Text('Reset'),
             ),
           ],
         ),
@@ -82,12 +82,14 @@ class _ContentWidgetState extends State<ContentWidget> {
   /// Allows to refresh the widget state.
   void refresh() {
     setState(() {
-      debuggableConditions = widget.rateMyApp.conditions.whereType<DebuggableCondition>().toList();
+      debuggableConditions =
+          widget.rateMyApp.conditions.whereType<DebuggableCondition>().toList();
       shouldOpenDialog = widget.rateMyApp.shouldOpenDialog;
     });
   }
 
-  List<Widget> starRateDialogActionsBuilder(BuildContext context, double stars) {
+  List<Widget> starRateDialogActionsBuilder(
+      BuildContext context, double stars) {
     final Widget cancelButton = RateMyAppNoButton(
       // We create a custom "Cancel" button using the RateMyAppNoButton class.
       widget.rateMyApp,
@@ -126,11 +128,10 @@ class _ContentWidgetState extends State<ContentWidget> {
     }
 
     return [
-      FlatButton(
-        child: Text(MaterialLocalizations.of(context).okButtonLabel.toUpperCase()),
+      TextButton(
         onPressed: () async {
           print(message);
-          Scaffold.of(context).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(message),
               backgroundColor: color,
@@ -138,10 +139,14 @@ class _ContentWidgetState extends State<ContentWidget> {
           );
 
           // This allow to mimic a click on the default "Rate" button and thus update the conditions based on it ("Do not open again" condition for example) :
-          await widget.rateMyApp.callEvent(RateMyAppEventType.rateButtonPressed);
-          Navigator.pop<RateMyAppDialogButton>(context, RateMyAppDialogButton.rate);
+          await widget.rateMyApp
+              .callEvent(RateMyAppEventType.rateButtonPressed);
+          Navigator.pop<RateMyAppDialogButton>(
+              context, RateMyAppDialogButton.rate);
           refresh();
         },
+        child:
+            Text(MaterialLocalizations.of(context).okButtonLabel.toUpperCase()),
       ),
       cancelButton,
     ];

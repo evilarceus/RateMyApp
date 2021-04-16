@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://github.com/Skyost/rate_my_app/raw/master/images/logo.svg" height="200">
+    <img src="https://github.com/Skyost/RateMyApp/raw/master/images/logo.svg" height="200">
 </div>
 
 # Rate my app !
@@ -13,7 +13,10 @@ _Rate my app_ is really inspired by [Android-Rate](https://github.com/hotchemi/A
 
 ### Installation
 
-To target an iOS version before _10.3_, add this in your `Info.plist` :
+If you're building your app for Android, be sure that your app is upgraded to the [Android Embedding V2](https://github.com/flutter/flutter/wiki/Upgrading-pre-1.12-Android-projects)
+(if you've created your project with a Flutter version ≥ 1.12, you should be okay).
+
+On iOS, if you want to target a version before _10.3_, add this in your `Info.plist` :
 
 ```xml
 <key>LSApplicationQueriesSchemes</key>
@@ -23,6 +26,7 @@ To target an iOS version before _10.3_, add this in your `Info.plist` :
 ```
 
 By the way, it's important to note that your bundle identifier (in your `Info.plist`) must match the App ID on iTunes Connect and the package identifier (in your `build.gradle`) must match your App ID on Google Play.
+Oh, and your project [must use Swift](https://github.com/Skyost/RateMyApp/issues/90).
 
 If for any reason it doesn't match please go to the _[Using custom identifiers](#using-custom-identifiers)_ section.
 
@@ -38,26 +42,28 @@ Then you should call `showRateDialog` which is going to show a native rating dia
 
 If you prefer, you can call `showStarRateDialog` which will show a dialog containing a star rating bar that will allow you to take custom actions based on the rating
 (for example if the user puts less than 3 stars then open your app bugs report page or something like this and if he puts more ask him to rate your app on the store page).
-
+Still, you have to be careful with these practises (see [this paragraph](https://appradar.com/blog/ask-users-leave-review-in-app-stores#fraudulent-methods-to-gain-more-app-store-reviews) on App Radar).
 
 ## Screenshots
 
 <details>
     <summary>On Android</summary>
-    <img src="https://github.com/Skyost/rate_my_app/raw/master/images/android.png" height="500">
-    <br><em><code>showRateDialog</code> method.</em>
+    <img src="https://github.com/Skyost/RateMyApp/raw/master/images/android.png" height="500">
+    <br><em><code>showRateDialog</code> method with <code>ignoreNative</code> set to <code>true</code>.</em>
 </details>
 
 <details>
     <summary>On iOS</summary>
-    <img src="https://github.com/Skyost/rate_my_app/raw/master/images/ios_10_3.png" height="500">
-    <br><em><code>showRateDialog</code> and <code>showStarRateDialog</code> methods with <code>ignoreIOS</code> set to <code>false</code>.</em>
+    <img src="https://github.com/Skyost/RateMyApp/raw/master/images/ios_10_3.png" height="500">
+    <br><em><code>showRateDialog</code> and <code>showStarRateDialog</code> methods with <code>ignoreNative</code> set to <code>false</code>.</em>
 </details>
 
-## Example
+## Using it in your code
+
+### Code snippets
 
 ```dart
-// In this example, I'm giving a value to all parameters.
+// In this snippet, I'm giving a value to all parameters.
 // Please note that not all are required (those that are required are marked with the @required annotation).
 
 RateMyApp rateMyApp = RateMyApp(
@@ -94,14 +100,14 @@ rateMyApp.init().then((_) {
         
         return true; // Return false if you want to cancel the click event.
       },
-      ignoreIOS: false, // Set to false if you want to show the Apple's native app rating dialog on iOS.
-      dialogStyle: DialogStyle(), // Custom dialog styles.
+      ignoreNativeDialog: Platform.isAndroid, // Set to false if you want to show the Apple's native app rating dialog on iOS or Google's native app rating dialog (depends on the current Platform).
+      dialogStyle: const DialogStyle(), // Custom dialog styles.
       onDismissed: () => rateMyApp.callEvent(RateMyAppEventType.laterButtonPressed), // Called when the user dismissed the dialog (either by taping outside or by pressing the "back" button).
       // contentBuilder: (context, defaultContent) => content, // This one allows you to change the default dialog content.
       // actionsBuilder: (context) => [], // This one allows you to use your own buttons. 
     );
     
-    // Or if you prefer to show a star rating bar :
+    // Or if you prefer to show a star rating bar (powered by `flutter_rating_bar`) :
     
     rateMyApp.showStarRateDialog(
       context,
@@ -122,20 +128,48 @@ rateMyApp.init().then((_) {
           ),
         ];
       },
-      ignoreIOS: false, // Set to false if you want to show the native Apple app rating dialog on iOS.
-      dialogStyle: DialogStyle( // Custom dialog styles.
+      ignoreNativeDialog: Platform.isAndroid, // Set to false if you want to show the Apple's native app rating dialog on iOS or Google's native app rating dialog (depends on the current Platform).
+      dialogStyle: const DialogStyle( // Custom dialog styles.
         titleAlign: TextAlign.center,
         messageAlign: TextAlign.center,
         messagePadding: EdgeInsets.only(bottom: 20),
       ),
-      starRatingOptions: StarRatingOptions(), // Custom star bar rating options.
+      starRatingOptions: const StarRatingOptions(), // Custom star bar rating options.
       onDismissed: () => rateMyApp.callEvent(RateMyAppEventType.laterButtonPressed), // Called when the user dismissed the dialog (either by taping outside or by pressing the "back" button).
     );
   }
 });
 ```
 
-If you want a more complete example, please check [this one](https://github.com/Skyost/rate_my_app/tree/master/example/) on Github.    
+### Minimal Example
+
+Below is the minimal code example. This will be for the basic minimal working of this plugin.
+The below will launch a simple message popup after the defined minimal days/minimal launches along with the default buttons :
+_Rate_, _Maybe later_ and _Cancel_, with their default behavior.
+
+Place this in your main widget state :
+
+```dart
+RateMyApp rateMyApp = RateMyApp(
+  preferencesPrefix: 'rateMyApp_',
+  minDays: 0, // Show rate popup on first day of install.
+  minLaunches: 5, // Show rate popup after 5 launches of app after minDays is passed.
+);
+
+@override
+void initState() {
+  super.initState();
+
+  WidgetsBinding.instance?.addPostFrameCallback((_) async {
+    await rateMyApp.init();
+    if (mounted && rateMyApp.shouldOpenDialog) {  
+      rateMyApp.showRateDialog(context);
+    }
+  });
+}
+```
+
+If you want a more complete example, please check [this one](https://github.com/Skyost/RateMyApp/tree/master/example/) on Github.    
 You can also follow [the tutorial of Marcus Ng](https://youtu.be/gOiaSwp984s) on YouTube
 (for a replacement of `doNotOpenAgain`, see [Broadcasting events](#broadcasting-events)).
 
@@ -194,7 +228,7 @@ You can easily create your custom conditions ! All you have to do is to extend t
 * `onEventOccurred` When an event occurs in the plugin lifecycle. This is usually here that you can update your condition values.
 Please note that you're not obligated to override this one (although this is recommended).
 
-You can have an easy example of it by checking the source code of [`DoNotOpenAgainCondition`](https://github.com/Skyost/rate_my_app/tree/master/lib/src/conditions.dart#L163).
+You can have an easy example of it by checking the source code of [`DoNotOpenAgainCondition`](https://github.com/Skyost/RateMyApp/tree/master/lib/src/conditions.dart#L169).
 
 Then you can add your custom condition to _Rate my app_ by using the constructor `customConditions` (or by calling `rateMyApp.conditions.add` before initialization).
 
@@ -203,7 +237,7 @@ Then you can add your custom condition to _Rate my app_ by using the constructor
 As said in the previous section, the `shouldOpenDialog` method depends on conditions.
 
 For example, when you click on the _No_ button,
-[this event](https://github.com/Skyost/rate_my_app/tree/master/lib/src/core.dart#L216) will be triggered
+[this event](https://github.com/Skyost/RateMyApp/tree/master/lib/src/core.dart#L237) will be triggered
 and the condition `DoNotOpenAgainCondition` will react to it and will stop being met and thus the `shouldOpenDialog` will return `false`.
 
 You may want to broadcast events in order to mimic the behaviour of the _No_ button for example.
@@ -216,20 +250,21 @@ Here are what events default conditions are listening to :
 * `DoNotOpenAgainCondition` : _Rate_ button press, _No_ button press.
 
 For example, starting from version 0.5.0, the getter/setter `doNotOpenAgain` has been removed.
-You must trigger the `DoNotOpenAgainCondition` either by calling a _Rate_ button press event or a _No_ button press event (see [Example on Github](https://github.com/Skyost/rate_my_app/tree/master/example/lib/main.dart#L120)).
+You must trigger the `DoNotOpenAgainCondition` either by calling a _Rate_ button press event or a _No_ button press event (see [Example on Github](https://github.com/Skyost/RateMyApp/blob/master/example/lib/content.dart#L141)).
 
 ## Contributions
 
 You have a lot of options to contribute to this project ! You can :
 
-* [Fork it](https://github.com/Skyost/rate_my_app/fork) on Github.
-* [Submit](https://github.com/Skyost/rate_my_app/issues/new/choose) a feature request or a bug report.
+* [Fork it](https://github.com/Skyost/RateMyApp/fork) on Github.
+* [Submit](https://github.com/Skyost/RateMyApp/issues/new/choose) a feature request or a bug report.
 * [Donate](https://paypal.me/Skyost) to the developer.
-* [Watch a little ad](https://utip.io/skyost) on uTip.
+* [Watch a little ad](https://www.clipeee.com/creator/skyost) on Clipeee.
 
 ## Dependencies
 
 This library depends on some other libraries :
 
 * [shared_preferences](https://pub.dev/packages/shared_preferences)
-* [smooth_star_rating](https://pub.dev/packages/smooth_star_rating)
+* [flutter_rating_bar](https://pub.dev/packages/flutter_rating_bar)
+* [pedantic](https://pub.dev/packages/pedantic)

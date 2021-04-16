@@ -1,3 +1,60 @@
+## 1.1.0+1
+* Fixed bugs with some `invokeMethod` calls.
+
+## 1.1.0
+* Added support for `flutter_rating_bar`.
+
+## 1.0.0+2
+* Fixed some problems with the Dart analyzer.
+
+## 1.0.0+1
+* Fixed some problems with the `pubspec.yaml` file.
+
+## 1.0.0
+* Null safety migration.
+* Updated for Flutter v2.0.0.
+
+## 0.7.2
+
+* Changed how the plugin handles store openings.
+* Various fixes and updates.
+
+## 0.7.1+1
+
+* Various fixes.
+
+## 0.7.1
+
+* Disabled Android native review dialog by default.
+* Various fixes on Android platforms (thanks [in_app_review](https://github.com/britannio/in_app_review)).
+
+## 0.7.0+1
+
+* Added some extra debugging info on Android.
+* Improved README (thanks [farazk86](https://github.com/Skyost/RateMyApp/pull/68)).
+
+## 0.7.0
+
+* Added support for the new [Google Play In-App Review API](https://developer.android.com/guide/playcore/in-app-review/).
+* Various useful methods and getters added (like `isNativeReviewDialogSupported` or `launchNativeReviewDialog()`).
+
+## 0.6.1+7
+
+* Updated README and ran `dartfmt` on the _lib_ folder.
+
+## 0.6.1+6
+
+* Removed a debug message.
+
+## 0.6.1+5
+
+* Fixed a bug with the builder.
+
+## 0.6.1+4
+
+* Fixed an issue regarding `MinimumDaysCondition` (see #57).
+* Fixed an issue with the iOS native dialog (see #56).
+
 ## 0.6.1+3
 
 * Preparing for `1.0.0` release of `shared_preferences` (see https://github.com/flutter/flutter/wiki/Package-migration-to-1.0.0).
